@@ -11,10 +11,49 @@ Requires Neovim **0.10+** and an attached LSP client named **gopls**. No Lua
 dependencies, Tree-sitter parser, lspconfig, or separate Go program are required.
 This plugin does not start or configure gopls.
 
+## Installation
+
+With [lazy.nvim](https://github.com/folke/lazy.nvim):
+
+```lua
+{
+  'vasily-sviridov/go-implements.nvim',
+}
+```
+
+With [packer.nvim](https://github.com/wbthomason/packer.nvim):
+
+```lua
+use({
+  'vasily-sviridov/go-implements.nvim',
+})
+```
+
+With [vim-plug](https://github.com/junegunn/vim-plug):
+
+```vim
+Plug 'vasily-sviridov/go-implements.nvim'
+```
+
+With [mini.deps](https://github.com/echasnovski/mini.deps):
+
+```lua
+MiniDeps.add({
+  source = 'vasily-sviridov/go-implements.nvim',
+})
+```
+
+Alternatively, install the repository as a native Neovim package:
+
+```sh
+mkdir -p "${XDG_DATA_HOME:-$HOME/.local/share}/nvim/site/pack/plugins/start"
+git clone https://github.com/vasily-sviridov/go-implements.nvim \
+  "${XDG_DATA_HOME:-$HOME/.local/share}/nvim/site/pack/plugins/start/go-implements.nvim"
+```
+
 ## Setup
 
-Install this repository with your plugin manager, or put it on Neovim's
-`runtimepath`, then call:
+After installing the plugin, call:
 
 ```lua
 require('go-implements').setup({
