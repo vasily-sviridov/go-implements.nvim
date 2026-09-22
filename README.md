@@ -18,6 +18,10 @@ With [lazy.nvim](https://github.com/folke/lazy.nvim):
 ```lua
 {
   'vasily-sviridov/go-implements.nvim',
+  ft = 'go',
+  config = function()
+    require('go-implements').setup()
+  end,
 }
 ```
 
@@ -26,6 +30,9 @@ With [packer.nvim](https://github.com/wbthomason/packer.nvim):
 ```lua
 use({
   'vasily-sviridov/go-implements.nvim',
+  config = function()
+    require('go-implements').setup()
+  end,
 })
 ```
 
@@ -41,6 +48,8 @@ With [mini.deps](https://github.com/echasnovski/mini.deps):
 MiniDeps.add({
   source = 'vasily-sviridov/go-implements.nvim',
 })
+
+require('go-implements').setup()
 ```
 
 Alternatively, install the repository as a native Neovim package:
@@ -51,9 +60,12 @@ git clone https://github.com/vasily-sviridov/go-implements.nvim \
   "${XDG_DATA_HOME:-$HOME/.local/share}/nvim/site/pack/plugins/start/go-implements.nvim"
 ```
 
-## Setup
+## Configuration
 
-After installing the plugin, call:
+The lazy.nvim, packer.nvim, and mini.deps examples above already configure the
+plugin with its defaults. When using vim-plug (after `plug#end()`) or a native
+package, call `setup` from your Neovim configuration. To customize the plugin
+with any manager, pass the same options to its `setup` call:
 
 ```lua
 require('go-implements').setup({
