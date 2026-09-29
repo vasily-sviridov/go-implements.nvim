@@ -1,7 +1,8 @@
 local M = {}
 local api = vim.api
 local ns = api.nvim_create_namespace('go-implements')
-local options = { enabled = true, debounce_ms = 300, highlight = 'LspCodeLens' }
+local defaults = { enabled = true, debounce_ms = 300, display = 'above', highlight = 'Comment' }
+local options = vim.deepcopy(defaults)
 local sessions, attached = {}, {}
 local modern = vim.fn.has('nvim-0.11') == 1
 local refresh_session
@@ -180,11 +181,16 @@ end
 local function render(buf, symbol, names)
   if #names == 0 then return end
   table.sort(names)
-  api.nvim_buf_set_extmark(buf, ns, symbol.range.start.line, 0, {
-    virt_lines = { { { 'implements ' .. table.concat(names, ', '), options.highlight } } },
-    virt_lines_above = true,
-    hl_mode = 'combine',
-  })
+  local interfaces = table.concat(names, ', ')
+  local extmark = { hl_mode = 'combine' }
+  if options.display == 'inline' then
+    extmark.virt_text = { { ' implements: ' .. interfaces, options.highlight } }
+    extmark.virt_text_pos = 'eol'
+  else
+    extmark.virt_lines = { { { 'implements ' .. interfaces, options.highlight } } }
+    extmark.virt_lines_above = true
+  end
+  api.nvim_buf_set_extmark(buf, ns, symbol.range.start.line, 0, extmark)
 end
 
 local function query(s, buf, symbol)
@@ -298,8 +304,9 @@ function M.refresh(buf)
 end
 
 function M.setup(opts)
-  options = vim.tbl_extend('force', { enabled = true, debounce_ms = 300, highlight = 'LspCodeLens' }, opts or {})
+  options = vim.tbl_extend('force', vim.deepcopy(defaults), opts or {})
   assert(type(options.enabled) == 'boolean', 'enabled must be a boolean')
+  assert(options.display == 'above' or options.display == 'inline', "display must be 'above' or 'inline'")
   assert(type(options.highlight) == 'string' and options.highlight ~= '', 'highlight must be a nonempty string')
   assert(type(options.debounce_ms) == 'number' and options.debounce_ms >= 0 and options.debounce_ms < math.huge,
     'debounce_ms must be finite and nonnegative')

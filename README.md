@@ -1,6 +1,7 @@
 # go-implements.nvim
 
-Persistent Go interface annotations above named concrete type declarations:
+Persistent Go interface annotations for named concrete type declarations. By
+default, annotations appear above declarations:
 
 ```text
 implements io.Closer, io.ReadCloser, io.Reader
@@ -71,13 +72,26 @@ with any manager, pass the same options to its `setup` call:
 require('go-implements').setup({
   enabled = true,
   debounce_ms = 300,
-  highlight = 'LspCodeLens',
+  display = 'above', -- 'above' or 'inline'
+  highlight = 'Comment',
 })
 ```
 
 All options are optional. Calling `setup` again replaces the configuration;
 `enabled = false` clears annotations and cancels outstanding work. Setup handles
 both existing gopls attachments and future `LspAttach` events.
+
+Set `display = 'inline'` for CodeLens-style virtual text at the end of the type
+declaration line. It contains no comment characters and does not modify the
+buffer:
+
+```text
+type File struct { implements: io.Closer, io.Reader
+```
+
+`highlight` is any Neovim highlight group. The default `Comment` is deliberately
+neutral; for a custom color, define a highlight group in your colorscheme setup
+and pass its name here. The same highlight applies to both display modes.
 
 Use `:GoImplementsRefresh` to invalidate and refresh the current buffer's gopls
 session. There is no automatic plugin entrypoint: calling `setup` is sufficient.
@@ -102,16 +116,16 @@ session. There is no automatic plugin entrypoint: calling `setup` is sufficient.
    `io.Reader` or `contracts.Runner`, even when the directory has another name.
    This also works for same-package and vendored interfaces when gopls provides
    the link. Aliases are displayed only as exposed by gopls.
-5. Native extmarks use `virt_lines_above = true` and the configured highlight.
-   The Go buffer text is never modified. For grouped declarations the annotation
-   appears above the individual type spec. Interface names are sorted, duplicate
+5. Native extmarks use either `virt_lines_above = true` or end-of-line
+   `virt_text`, according to `display`, plus the configured highlight. The Go
+   buffer text is never modified. For grouped declarations the annotation is
+   attached to the individual type spec. Interface names are sorted, duplicate
    locations are collapsed, and distinct locations with identical display names
    get a path-and-line suffix so neither interface disappears.
 
-These are virtual lines, rather than actual LSP CodeLens objects: the CodeLens
-protocol has no placement control, and Neovim's CodeLens display does not provide
-the required above-declaration placement. No mouse bindings or jump commands are
-installed; normal Neovim implementation navigation remains available.
+These are virtual annotations, rather than actual LSP CodeLens objects: the
+CodeLens protocol has no placement control. No mouse bindings or jump commands
+are installed; normal Neovim implementation navigation remains available.
 
 ## Performance and refresh
 

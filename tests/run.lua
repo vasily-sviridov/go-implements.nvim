@@ -43,6 +43,11 @@ local function marks(buf)
   end
   return texts
 end
+local function mark_details(buf)
+  local marks_with_details = api.nvim_buf_get_extmarks(buf, ns, 0, -1, { details = true })
+  assert(#marks_with_details == 1, vim.inspect(marks_with_details))
+  return marks_with_details[1][4]
+end
 local function buffer(lines)
   local buf = api.nvim_create_buf(true, false)
   api.nvim_buf_set_name(buf, '/tmp/go-implements-test-' .. buf .. '.go')
@@ -100,10 +105,39 @@ test('one interface; external buffer remains unloaded; unchanged buffer cached',
   start()
   wait(function() return #marks(buf) == 1 end)
   eq(marks(buf), { 'implements io.Reader' })
+  eq(mark_details(buf).virt_lines, { { { 'implements io.Reader', 'Comment' } } })
   eq(#api.nvim_list_bufs(), before)
   api.nvim_exec_autocmds('BufEnter', { buffer = buf })
   idle()
   eq(counts['textDocument/implementation'], 1)
+end)
+
+test('inline display renders CodeLens-style text after the declaration', function()
+  responder = function(method)
+    if method == 'textDocument/documentSymbol' then return nil, { symbol('Foo', 1) } end
+    if method == 'textDocument/implementation' then return nil, { loc() } end
+    return nil, hover('io.Reader')
+  end
+  local buf = buffer()
+  plugin.setup({ debounce_ms = 5, display = 'inline', highlight = 'Comment' })
+  wait(function() return #api.nvim_buf_get_extmarks(buf, ns, 0, -1, {}) == 1 end)
+  local details = mark_details(buf)
+  eq(details.virt_text, { { ' implements: io.Reader', 'Comment' } })
+  eq(details.virt_text_pos, 'eol')
+  eq(details.virt_lines, nil)
+end)
+
+test('above display remains available with a configurable highlight', function()
+  responder = function(method)
+    if method == 'textDocument/documentSymbol' then return nil, { symbol('Foo', 1) } end
+    if method == 'textDocument/implementation' then return nil, { loc() } end
+    return nil, hover('io.Reader')
+  end
+  local buf = buffer()
+  plugin.setup({ debounce_ms = 5, display = 'above', highlight = 'DiagnosticHint' })
+  wait(function() return #marks(buf) == 1 end)
+  local details = mark_details(buf)
+  eq(details.virt_lines, { { { 'implements io.Reader', 'DiagnosticHint' } } })
 end)
 
 test('multiple interfaces sorted and duplicate locations coalesced', function()
